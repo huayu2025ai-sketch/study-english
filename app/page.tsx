@@ -26,6 +26,17 @@ const quiz: Quiz[] = [
   { question: "Complete: The sky is _____. ☁️", options: ["snowy", "cloudy", "stormy"], answer: 1, hint: "Clouds are in the sky." },
   { question: "Which weather can make a kite fly?", options: ["Windy", "Snowy", "Sunny"], answer: 0, hint: "The air is moving." },
   { question: "What falls from the sky on a snowy day?", options: ["Rainbows", "Leaves", "Snowflakes"], answer: 2, hint: "They are white and cold." },
+  { question: "Complete: It is _____ outside. 💨", options: ["windy", "cloudy", "sunny"], answer: 0, hint: "The air is moving fast." },
+  { question: "Which word describes a very dark sky with thunder?", options: ["stormy", "snowy", "sunny"], answer: 0, hint: "Listen for thunder and look for lightning." },
+  { question: "Choose the best sentence for a cold day.", options: ["Wear a warm coat.", "Take a beach towel.", "Open the umbrella for sun."], answer: 0, hint: "A coat helps keep your body warm." },
+  { question: "Which spelling is correct?", options: ["clowdy", "cloudy", "cloudie"], answer: 1, hint: "Cloud + y makes cloudy." },
+  { question: "What question can you ask about today’s weather?", options: ["What is the weather like?", "Where is my pencil?", "Who is your teacher?"], answer: 0, hint: "It starts with What and asks about weather." },
+];
+
+const bonusTests = [
+  { title: "句型小侦探", prompt: "Choose: It is ___ today. ☀️", options: ["sunny", "rainy"], answer: 0 },
+  { title: "生活小选择", prompt: "It is rainy. What do you need?", options: ["An umbrella", "A kite"], answer: 0 },
+  { title: "拼写小达人", prompt: "Which one is a weather word?", options: ["windy", "windee"], answer: 0 },
 ];
 
 const reading = [
@@ -41,6 +52,7 @@ export default function Home() {
   const [answered, setAnswered] = useState(false);
   const [weather, setWeather] = useState("sunny");
   const [diaryText, setDiaryText] = useState("");
+  const [bonusAnswers, setBonusAnswers] = useState<(number | null)[]>([null, null, null]);
   const currentQuiz = quiz[quizIndex];
 
   function choose(option: number) {
@@ -61,6 +73,10 @@ export default function Home() {
   }
 
   function go(id: string) { setActive(id); document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
+
+  function answerBonus(testIndex: number, answer: number) {
+    setBonusAnswers((values) => values.map((value, index) => index === testIndex ? answer : value));
+  }
 
   return (
     <main>
@@ -94,6 +110,8 @@ export default function Home() {
       <section className="diary-band"><div className="section-wrap diary-inner"><div><p className="eyebrow">MY WEATHER DIARY</p><h2>今天的天空是什么样？</h2><p>选一个天气，再写一句话或画一画。记录你的小发现。</p><div className="weather-picker">{words.slice(0, 5).map((item) => <button key={item.word} className={weather === item.word ? "chosen" : ""} onClick={() => setWeather(item.word)}>{item.emoji}<small>{item.word}</small></button>)}</div></div><div className="diary-note"><div className="date-line">AUGUST 03, 2026 <span>MY NOTE</span></div><p>Today is a <b>{weather}</b> day.</p><textarea aria-label="天气日记" value={diaryText} onChange={(event) => setDiaryText(event.target.value)} placeholder="I can see... / 我能看到……" /><div className="diary-footer">{diaryText.length > 0 ? "Great observation! 🌟" : "写一句你的观察吧"}</div></div></div></section>
 
       <section id="quiz" className="quiz section-wrap"><div className="quiz-intro"><p className="eyebrow">THE BIG CHECK</p><h2>小小气象员<br /><i>准备好了吗？</i></h2><p>答对问题，收集你的天气徽章。别担心，答错也是学习的一部分！</p><div className="score-pill">⭐ {score} / {quiz.length} stars</div></div><div className="quiz-box"><div className="quiz-top"><span>{quizIndex >= quiz.length ? "MISSION COMPLETE" : `QUESTION ${quizIndex + 1} / ${quiz.length}`}</span><div className="dots">{quiz.map((_, i) => <i key={i} className={i < quizIndex ? "filled" : ""} />)}</div></div>{quizIndex >= quiz.length ? <div className="quiz-complete"><div className="big-star">🏆</div><h3>太棒了！你是天气小专家！</h3><p>你收集了 {score} 颗星星，记得把今天学到的词告诉家人。</p><button className="button primary restart" onClick={resetQuiz}>再来一次 ↻</button></div> : <><h3>{currentQuiz.question}</h3><div className="options">{currentQuiz.options.map((option, i) => <button key={option} className={answered ? (i === currentQuiz.answer ? "correct" : i === selected ? "wrong" : "") : ""} onClick={() => choose(i)}>{option}<span>{answered && i === currentQuiz.answer ? "✓" : answered && i === selected ? "×" : ""}</span></button>)}</div>{answered && <div className="quiz-result"><p>{selected === currentQuiz.answer ? "答对啦！" : "再想一想～"} {currentQuiz.hint}</p><button className="next-button" onClick={nextQuestion}>{quizIndex === quiz.length - 1 ? "查看结果" : "下一题"} →</button></div>}</>}</div></section>
+
+      <section className="bonus section-wrap"><div className="section-heading"><div><p className="eyebrow">EXTRA PRACTICE</p><h2>加餐挑战 · 3 quick tests</h2></div><span className="tip">每题都可以重选</span></div><div className="bonus-grid">{bonusTests.map((test, testIndex) => { const answer = bonusAnswers[testIndex]; return <article className="bonus-card" key={test.title}><span className="bonus-number">0{testIndex + 1}</span><h3>{test.title}</h3><p>{test.prompt}</p><div className="bonus-options">{test.options.map((option, optionIndex) => <button key={option} className={answer !== null ? (optionIndex === test.answer ? "correct" : optionIndex === answer ? "wrong" : "") : ""} onClick={() => answerBonus(testIndex, optionIndex)}>{option}{answer !== null && optionIndex === test.answer ? " ✓" : ""}</button>)}</div>{answer !== null && <small>{answer === test.answer ? "Great job! 🌟" : "Look again and try the next one."}</small>}</article>; })}</div></section>
 
       <section className="parent-prompt section-wrap"><span className="prompt-icon">💛</span><div><p className="eyebrow">A LITTLE HELP FOR GROWN-UPS</p><h3>亲子提问小卡</h3><p>和孩子一起看窗外，问问：<b>“What is the weather like today?”</b><br />让孩子用一句英语回答，再一起找出对应的天气词。</p></div><span className="prompt-mark">☁︎</span></section>
       <footer><span>☁ Little Weather Club</span><span>Made for curious readers · 读完这本书，去观察今天的天空吧！</span></footer>
