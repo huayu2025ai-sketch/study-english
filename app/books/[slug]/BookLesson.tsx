@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getVocabulary, stageInfo, type Book } from "../../lib/books";
 
 const commonQuestions = [
@@ -16,6 +16,7 @@ export function BookLesson({ book }: { book: Book }) {
   const [flipped, setFlipped] = useState<number | null>(null);
   const [remembered, setRemembered] = useState<number[]>([]);
   const [wordChoice, setWordChoice] = useState<number | null>(null);
+  const [dark, setDark] = useState(false);
   const vocabulary = useMemo(() => getVocabulary(book), [book]);
   const wordQuestion = vocabulary[0];
   const wordOptions = [wordQuestion.chinese, "一个动作", "一种颜色"];
@@ -29,11 +30,17 @@ export function BookLesson({ book }: { book: Book }) {
   const current = questions[selected === null ? 0 : Math.min(selected, questions.length - 1)];
   const answered = selected !== null;
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem("weather-club-theme") === "dark";
+    setDark(saved);
+    document.documentElement.classList.toggle("dark", saved);
+  }, []);
+
   function answer(option: number) { if (!answered) setSelected(option); }
   function next() { if (selected === questions.length - 1) setDone(true); else setSelected((value) => (value === null ? 0 : value + 1)); }
 
   return <main className="lesson-page">
-    <header className="topbar lesson-topbar"><Link className="brand" href="/"><span>☁</span> Little Weather Club</Link><Link className="back-link" href="/">← Back to library</Link><span className="lesson-progress">1 book · 1 small goal</span></header>
+    <header className="topbar lesson-topbar"><Link className="brand" href="/"><span>☁</span> Little Weather Club</Link><Link className="back-link" href="/">← Back to library</Link><div className="header-actions"><button className="theme-toggle" onClick={() => { const next = !dark; setDark(next); window.localStorage.setItem("weather-club-theme", next ? "dark" : "light"); document.documentElement.classList.toggle("dark", next); }} aria-label="切换深色模式">{dark ? "☀️" : "🌙"}<span>{dark ? "浅色" : "深色"}</span></button><span className="lesson-progress">1 book · 1 small goal</span></div></header>
     <section className="lesson-hero section-wrap"><div className="lesson-cover">{book.title === "Weather" ? <img src="/weather-cover.jpg" alt="Weather book cover" /> : <span>{book.emoji}</span>}</div><div className="lesson-title"><p className="eyebrow">NOW READING · USBORNE BEGINNERS</p><h1>{book.title}</h1><p className="lesson-chinese">{book.chinese}</p><div className={`lesson-stage ${book.stage}`}>{stageInfo[book.stage].label} · {book.age}</div><p className="lesson-description">{book.description}</p><div className="lesson-actions"><a className="button primary" href="#learn">开始这一课 <span>↓</span></a><span className="tiny-note">建议 10–15 分钟</span></div></div></section>
     <section className="lesson-overview section-wrap"><div><p className="eyebrow">READING GUIDE</p><h2>这本书适合怎样读？</h2><p className="overview-copy">{stageInfo[book.stage].intro}</p></div><div className="overview-cards"><div><span>🎯</span><b>今日目标</b><p>认识 5 个关键词，并用一句英语说出一个发现。</p></div><div><span>🧭</span><b>阅读重点</b><p>{book.focus} · 看图找线索 · 读完复述。</p></div></div></section>
     <section id="learn" className="lesson-learn section-wrap"><div className="section-heading"><div><p className="eyebrow">LEARN TOGETHER</p><h2>三步学习法</h2></div><span className="tip">读一页，停一下，说一说</span></div><div className="lesson-steps"><article><span>01</span><h3>Look 看图</h3><p>先不查词，观察图片，猜一猜这一页在讲什么。</p></article><article><span>02</span><h3>Read 读词</h3><p>圈出 5 个关键词。把它们读三遍，再放回句子里。</p></article><article><span>03</span><h3>Tell 复述</h3><p>合上书，用 “I learned…” 说出一个新发现。</p></article></div><div className="keyword-strip"><span>今天的关键词</span>{book.keywords.map((keyword) => <b key={keyword}>{keyword}</b>)}<b>{book.title.toLowerCase()}</b></div></section>
