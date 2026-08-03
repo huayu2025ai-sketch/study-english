@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 type Quiz = { question: string; options: string[]; answer: number; hint: string };
+type Stage = "starter" | "explorer" | "independent";
+type Book = { title: string; chinese: string; emoji: string; stage: Stage; focus: string };
 
 const words = [
   { word: "sunny", chinese: "晴朗的", emoji: "☀️", sentence: "It is sunny today." },
@@ -12,6 +14,16 @@ const words = [
   { word: "snowy", chinese: "下雪的", emoji: "❄️", sentence: "We can play in the snow." },
   { word: "stormy", chinese: "暴风雨的", emoji: "⛈️", sentence: "A stormy sky can be very dark." },
 ];
+
+const books: Book[] = [
+  ["Planes", "飞机", "✈️", "starter", "交通与动作词"], ["Snakes", "蛇", "🐍", "explorer", "动物与形容词"], ["Octopuses", "章鱼", "🐙", "starter", "海洋与身体"], ["Volcanoes", "火山", "🌋", "independent", "地球与因果"], ["Trucks", "卡车", "🚚", "starter", "车辆与职业"], ["How Flowers Grow", "花是怎样长大的", "🌷", "explorer", "植物与过程"], ["Whales", "鲸鱼", "🐋", "explorer", "海洋动物"], ["Ants", "蚂蚁", "🐜", "starter", "动物与合作"], ["Trees", "树", "🌳", "explorer", "自然与观察"], ["Bees and Wasps", "蜜蜂和黄蜂", "🐝", "independent", "昆虫与安全"], ["Reptiles", "爬行动物", "🦎", "explorer", "动物分类"], ["Caterpillars and Butterflies", "毛毛虫和蝴蝶", "🦋", "starter", "变化与时间"], ["Reptiles", "爬行动物（新版）", "🐢", "explorer", "比较与描述"], ["Coral Reefs", "珊瑚礁", "🪸", "independent", "生态与保护"], ["Dangerous Animals", "危险动物", "🐊", "independent", "安全与事实"], ["Spiders", "蜘蛛", "🕷️", "explorer", "身体与数量"], ["Bugs", "小虫子", "🐞", "starter", "自然词汇"], ["Baby Animals", "动物宝宝", "🦒", "starter", "家庭与成长"], ["Underground Animals", "地下动物", "🦡", "explorer", "栖息地"], ["Penguins", "企鹅", "🐧", "starter", "极地与生活"], ["Antarctica", "南极洲", "🧊", "independent", "地理与气候"], ["Planet Earth", "地球", "🌍", "independent", "地球科学"], ["Living in Space", "太空生活", "🚀", "independent", "科学与想象"], ["Horses and Ponies", "马和小马", "🐴", "starter", "动物与照料"], ["Trains", "火车", "🚆", "starter", "交通与地点"], ["Earthquakes & Tsunamis", "地震和海啸", "🌊", "independent", "自然灾害"], ["Weather", "天气", "⛈️", "starter", "天气表达"], ["Rainforests", "热带雨林", "🌴", "explorer", "环境与动物"], ["The Solar System", "太阳系", "🪐", "independent", "太空与顺序"], ["Storms and Hurricanes", "风暴和飓风", "🌪️", "independent", "天气与安全"], ["Under the Sea", "海底世界", "🐠", "explorer", "海洋词汇"], ["On the Beach", "在海滩上", "🏖️", "starter", "场景与感官"], ["Firefighters", "消防员", "🚒", "starter", "职业与安全"], ["Dinosaurs", "恐龙", "🦕", "explorer", "过去与比较"], ["Sharks", "鲨鱼", "🦈", "explorer", "海洋与事实"],
+].map(([title, chinese, emoji, stage, focus]) => ({ title, chinese, emoji, stage: stage as Stage, focus }));
+
+const stageInfo: Record<Stage, { label: string; intro: string; detail: string }> = {
+  starter: { label: "起步阅读 · Starter", intro: "先建立信心，从熟悉、好玩的主题开始。", detail: "适合亲子共读：看图说词，每次读 2–4 页。" },
+  explorer: { label: "探索阅读 · Explorer", intro: "开始用英语理解事实，并练习说完整句子。", detail: "适合独立读一段，再和家人分享一个新发现。" },
+  independent: { label: "独立阅读 · Independent", intro: "挑战更丰富的科学词汇和因果关系。", detail: "适合先通读，再做词汇卡和小测验。" },
+};
 
 const facts = [
   { emoji: "🌈", title: "Rainbows need rain", text: "When sunlight shines through raindrops, we may see a rainbow." },
@@ -46,6 +58,8 @@ const reading = [
 
 export default function Home() {
   const [active, setActive] = useState("start");
+  const [libraryFilter, setLibraryFilter] = useState<Stage | "all">("all");
+  const [selectedBook, setSelectedBook] = useState(26);
   const [quizIndex, setQuizIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -54,6 +68,8 @@ export default function Home() {
   const [diaryText, setDiaryText] = useState("");
   const [bonusAnswers, setBonusAnswers] = useState<(number | null)[]>([null, null, null]);
   const currentQuiz = quiz[quizIndex];
+  const visibleBooks = libraryFilter === "all" ? books : books.filter((book) => book.stage === libraryFilter);
+  const selectedBookData = books[selectedBook];
 
   function choose(option: number) {
     if (answered) return;
@@ -83,7 +99,7 @@ export default function Home() {
       <header className="topbar">
         <a className="brand" href="#start" onClick={() => setActive("start")}><span>☁</span> Little Weather Club</a>
         <nav aria-label="主导航">
-          {[['start', '学习地图'], ['words', '词汇'], ['discover', '发现天气'], ['quiz', '小测验']].map(([id, label]) => <a key={id} className={active === id ? "active" : ""} href={`#${id}`} onClick={() => setActive(id)}>{label}</a>)}
+          {[['start', '学习地图'], ['library', '选一本书'], ['words', '词汇'], ['discover', '发现天气'], ['quiz', '小测验']].map(([id, label]) => <a key={id} className={active === id ? "active" : ""} href={`#${id}`} onClick={() => setActive(id)}>{label}</a>)}
         </nav>
         <div className="streak">🔥 <b>3</b> 天学习</div>
       </header>
@@ -92,6 +108,8 @@ export default function Home() {
         <div className="hero-copy"><p className="eyebrow">USBORNE BEGINNERS · WEATHER</p><h1>Let&apos;s talk<br /><i>about weather.</i></h1><p className="hero-text">和小云朵一起读懂天气，用英语描述窗外的世界。今天只要 10 分钟，完成一小步也很棒！</p><div className="hero-actions"><a className="button primary" href="#words" onClick={() => setActive("words")}>开始学习 <span>→</span></a><span className="tiny-note">亲子共读 · 6 个学习站</span></div></div>
         <div className="book-card"><div className="book-shine" /><img src="/weather-cover.jpg" alt="Usborne Beginners Weather book cover" /><div className="book-tag">READ · SAY · PLAY</div></div><div className="cloud cloud-one">☁</div><div className="cloud cloud-two">☁</div>
       </section>
+
+      <section id="library" className="library section-wrap"><div className="section-heading"><div><p className="eyebrow">THE BEGINNERS LIBRARY</p><h2>今天想读哪一本？</h2></div><span className="completion">35 books · 3 reading stages</span></div><div className="library-intro"><div><p>这套书官方目录目前有 35 本。先选一本，再按孩子的状态决定今天是“亲子共读”“自己读一段”，还是“读完做挑战”。</p><div className="stage-tabs"><button className={libraryFilter === "all" ? "selected" : ""} onClick={() => setLibraryFilter("all")}>全部 35 本</button>{(Object.keys(stageInfo) as Stage[]).map((stage) => <button key={stage} className={libraryFilter === stage ? "selected" : ""} onClick={() => setLibraryFilter(stage)}>{stageInfo[stage].label.split(" · ")[0]}</button>)}</div></div><div className="selected-book"><span className="selected-book-emoji">{selectedBookData.emoji}</span><div><small>NOW READING</small><h3>{selectedBookData.title}</h3><p>{stageInfo[selectedBookData.stage].label} · {selectedBookData.focus}</p></div></div></div><div className="library-grid">{visibleBooks.map((book) => { const index = books.indexOf(book); return <button className={`library-card ${index === selectedBook ? "selected" : ""}`} key={`${book.title}-${index}`} onClick={() => setSelectedBook(index)}><span className="library-emoji">{book.emoji}</span><span className="library-title"><b>{book.title}</b><small>{book.chinese}</small></span><span className={`stage-dot ${book.stage}`}>{book.stage === "starter" ? "起步" : book.stage === "explorer" ? "探索" : "独立"}</span></button>; })}</div><div className="stage-guide"><span className="guide-icon">💡</span><div><b>{stageInfo[selectedBookData.stage].label}</b><p>{stageInfo[selectedBookData.stage].intro} {stageInfo[selectedBookData.stage].detail}</p></div><span className="guide-arrow">→</span></div></section>
 
       <section className="path section-wrap" aria-label="学习地图"><div className="section-heading"><div><p className="eyebrow">YOUR MINI ADVENTURE</p><h2>今天的学习地图</h2></div><span className="completion">{Math.round((Math.min(quizIndex, quiz.length) / quiz.length) * 100)}% complete</span></div><div className="steps">
         <a href="#words" className="step done" onClick={() => setActive("words")}><span className="step-icon">☀️</span><span><b>1. Meet the weather</b><small>认识 6 个天气词</small></span><em>✓</em></a>
